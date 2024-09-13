@@ -1,0 +1,16 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.section {
+    margin-bottom: 20px;
+}
+
+textarea {
+    width: 100%; /* 画面幅いっぱいに広げる */
+    height: 300px; /* 高さを指定 */
+    box-sizing: border-box; /* パディングとボーダーも幅に含める */
+    padding: 10px; /* 内側の余白 */
+    font-size: 16px; /* フォントサイズを少し大きく */
+}
