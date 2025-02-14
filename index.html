@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飲食店 - トップページ</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-size: cover;
+            background-size: 100%;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        header {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-bottom: 2px solid #ffffff;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 4em;
+            font-weight: normal;
+            text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.8);
+        }
+
+        main {
+            margin-top: 50px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 40px;
+        }
+
+        .button-container button {
+            padding: 20px 50px;
+            font-size: 1.8em;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.3s, background-color 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .button-container .dine-in {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+
+        .button-container .take-out {
+            background-color: #FFA726;
+            color: #fff;
+        }
+
+        .button-container button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        footer {
+            position: relative;
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body background="image2.jpg">
+    <header>
+        <h1>スマートオーダーペイ</h1>
+    </header>
+    <main>
+        <div class="button-container">
+            <button class="dine-in" onclick="location.href='test.html'">店内飲食</button>
+            <button class="take-out">お持ち帰り</button>
+        </div>
+    </main>
+</body>
+</html>
