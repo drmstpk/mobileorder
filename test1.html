@@ -108,23 +108,23 @@
             background-color: #e60000;
         }
 
-        .save-nickname-button {
+        .nickname-button {
+            margin-left: 10px;
             padding: 5px 10px;
-            background-color: #4CAF50;
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 10px;
         }
 
-        .save-nickname-button:hover {
-            background-color: #45a049;
+        .nickname-button:hover {
+            background-color: #0056b3;
         }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBi4R5J3DfW8xBXbM9cjSmQ_Ycwlzr76W4",
@@ -155,13 +155,17 @@
                 return summaryHTML;
             };
 
-            const saveNickname = (orderId) => {
-                const nickname = prompt("ニックネームを入力してください:");
-                if (nickname) {
-                    const orderRef = ref(database, `orders/${orderId}`);
-                    set(orderRef, { nickname }).catch((error) => console.error("保存エラー:", error));
-                    alert("ニックネームが保存されました。");
-                }
+            const removeOrderFromSummary = (summary, items) => {
+                items.forEach(({ name, count, price }) => {
+                    if (summary[name]) {
+                        summary[name].count -= count;
+                        summary[name].total -= count * price;
+
+                        if (summary[name].count <= 0) {
+                            delete summary[name];
+                        }
+                    }
+                });
             };
 
             onValue(ordersRef, (snapshot) => {
@@ -254,7 +258,7 @@
 
                                 const header = document.createElement("div");
                                 header.classList.add("order-header");
-                                header.textContent = `ニックネーム: ${order.nickname} / 注文日時: ${order.date}`;
+                                header.textContent = `ニックネーム: ${order.nickname || '未設定'} / 注文日時: ${order.date}`;
                                 orderDiv.appendChild(header);
 
                                 const itemsDiv = document.createElement("div");
@@ -271,22 +275,29 @@
                                 totalDiv.textContent = `合計金額: ¥${order.total}`;
                                 orderDiv.appendChild(totalDiv);
 
+                                // ニックネーム設定ボタン
+                                const nicknameButton = document.createElement("button");
+                                nicknameButton.classList.add("nickname-button");
+                                nicknameButton.textContent = "ニックネームを保存";
+                                nicknameButton.addEventListener("click", () => {
+                                    const nickname = prompt("ニックネームを入力してください:");
+                                    if (nickname) {
+                                        const orderRef = ref(database, `orders/${order.id}`);
+                                        set(orderRef, { ...order, nickname }).catch((error) => console.error("エラー:", error));
+                                    }
+                                });
+                                orderDiv.appendChild(nicknameButton);
+
                                 const deleteButton = document.createElement("button");
                                 deleteButton.textContent = "この注文を削除";
                                 deleteButton.classList.add("delete-button");
                                 deleteButton.addEventListener("click", () => {
-                                    if (confirm("この注文を削除しますか？")) {
+                                    if (confirm(`この注文を削除しますか？`)) {
                                         const orderRef = ref(database, `orders/${order.id}`);
                                         remove(orderRef).catch((error) => console.error("削除エラー:", error));
                                     }
                                 });
                                 orderDiv.appendChild(deleteButton);
-
-                                const saveNicknameButton = document.createElement("button");
-                                saveNicknameButton.textContent = "ニックネームを保存";
-                                saveNicknameButton.classList.add("save-nickname-button");
-                                saveNicknameButton.addEventListener("click", () => saveNickname(order.id));
-                                orderDiv.appendChild(saveNicknameButton);
 
                                 dayDiv.appendChild(orderDiv);
                             });
@@ -294,15 +305,7 @@
                             monthDiv.appendChild(dayDiv);
                         });
 
-                        monthDiv.innerHTML += updateSummaryHTML(monthlySummary[month], "月ごとの要約");
                         ordersContainer.appendChild(monthDiv);
-                    });
-
-                    Object.entries(dailySummary).forEach(([day, data]) => {
-                        const daySummaryDiv = document.createElement("div");
-                        daySummaryDiv.classList.add("summary");
-                        daySummaryDiv.innerHTML = `<strong>${day}:</strong><br>${updateSummaryHTML(data.summary, "日ごとの要約")} 総合計: ¥${data.total}`;
-                        ordersContainer.appendChild(daySummaryDiv);
                     });
                 }
             });
@@ -310,7 +313,7 @@
     </script>
 </head>
 <body>
-    <h1>注文内容表示</h1>
+    <h1>注文履歴</h1>
     <div id="orders-container"></div>
 </body>
 </html>
