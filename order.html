@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メニュー選択</title>
+    <style>
+        /* 管理者パスワード欄を目立たなくする */
+        #adminLogin {
+    position: fixed;
+    top: 0px; /* 画面の上端に固定 */
+    right: 10px; /* 画面の右端から10px */
+    font-size: 0.9em;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000; /* 他の要素の上に表示 */
+}
+
+        #nickname {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #selectedItems {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+            
+        #selectedItems h3 {
+            margin-top: 0;
+        }
+
+        .menu-item {
+            display: inline-block;
+            text-align: center;
+            margin: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 150px;
+            height: 280px;
+            background-color: #f9f9f9;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+
+        .menu-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .menu-item p {
+            margin: 5px 0;
+        }
+
+        .menu-item .price {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .menu-category {
+            margin-top: 20px;
+        }
+
+        .menu-category h2 {
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        .menu-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .quantity-controls button {
+            width: 25px;
+            height: 25px;
+        }
+
+      #orderButton {
+            position: absolute;
+            bottom: 0px; /* 画面の下端に固定 */
+            right: 20px; /* 画面の右端から20px */
+            width: 200px; /* ボタンの幅を大きく */
+            height: 80px; /* ボタンの高さを大きく */
+            font-size: 1.5em; /* フォントサイズを大きく */
+            background-color: #ff4500; /* 目立つオレンジ色 */
+            color: #fff; /* 文字色を白に */
+            border: none;
+            border-radius: 10px; /* 角を丸く */
+            cursor: pointer;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000; /* 他の要素の上に表示 */
+            transition: background-color 0.3s; /* ホバー時の滑らかな変化 */
+        }
+
+    #orderButton:hover {
+    background-color: #e03e00; /* ホバー時に少し暗くする */
+}
+
+            .footer {
+            position: relative;
+            padding-bottom: 100px; /* ボタン分の余白を確保 */
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getDatabase, ref, push, set, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBi4R5J3DfW8xBXbM9cjSmQ_Ycwlzr76W4",
+            authDomain: "test2-802ce.firebaseapp.com",
+            databaseURL: "https://test2-802ce-default-rtdb.firebaseio.com",
+            projectId: "test2-802ce",
+            storageBucket: "test2-802ce.appspot.com",
+            messagingSenderId: "624514936023",
+            appId: "1:624514936023:web:cbbd8f7a89450b86e8d492",
+            measurementId: "G-5H39DWSK3Y"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const foodContainer = document.getElementById('foodContainer');
+            const drinkContainer = document.getElementById('drinkContainer');
+            const otherContainer = document.getElementById('otherContainer');
+            const adminSection = document.getElementById('adminSection');
+            const passwordInput = document.getElementById('adminPassword');
+            const loginButton = document.getElementById('loginButton');
+            const selectedItemsContainer = document.getElementById('selectedItems');
+            const nicknameInput = document.getElementById('nickname'); // ニックネーム入力欄
+
+            let selectedItems = {};
+
+            // ページロード時にメニューを読み込む
+            const menusRef = ref(database, 'menus');
+            get(menusRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const menus = snapshot.val();
+                    for (let id in menus) {
+                        const menu = menus[id];
+                        addMenuToCategory(menu.category, menu.name, menu.price, menu.image, id, menu.tax, false);
+                    }
+                }
+            }).catch((error) => {
+                console.error("メニューの読み込み中にエラーが発生しました: ", error);
+            });
+
+            loginButton.addEventListener('click', function () {
+                const password = passwordInput.value;
+                if (password === 'admin123') {
+                    adminSection.style.display = 'block';
+                    passwordInput.value = '';
+
+                    get(menusRef).then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const menus = snapshot.val();
+                            foodContainer.innerHTML = '';
+                            drinkContainer.innerHTML = '';
+                            otherContainer.innerHTML = '';
+                            for (let id in menus) {
+                                const menu = menus[id];
+                                addMenuToCategory(menu.category, menu.name, menu.price, menu.image, id, menu.tax, true);
+                            }
+                        }
+                    });
+                } else {
+                    alert('パスワードが間違っています。');
+                }
+            });
+
+            document.getElementById('addMenuButton').addEventListener('click', function () {
+                const menuName = document.getElementById('menuName').value;
+                const menuPrice = parseInt(document.getElementById('menuPrice').value, 10);
+                const menuImage = document.getElementById('menuImage').value;
+                const menuCategory = document.getElementById('menuCategory').value;
+                const menuTax = document.querySelector('input[name="menuTax"]:checked').value;
+
+                if (menuName && menuPrice && menuImage && menuCategory) {
+                    const priceWithTax = menuTax === '10' ? Math.round(menuPrice * 1.1) : Math.round(menuPrice * 1.08);
+                    const newMenuRef = push(menusRef);
+                    const menuData = { name: menuName, price: priceWithTax, image: menuImage, category: menuCategory, tax: menuTax };
+
+                    set(newMenuRef, menuData).then(() => {
+                        addMenuToCategory(menuCategory, menuName, priceWithTax, menuImage, newMenuRef.key, menuTax, true);
+                        document.getElementById('menuName').value = '';
+                        document.getElementById('menuPrice').value = '';
+                        document.getElementById('menuImage').value = '';
+                        document.getElementById('menuCategory').value = '';
+                    }).catch((error) => {
+                        console.error("メニューの保存中にエラーが発生しました: ", error);
+                        alert("メニューの保存に失敗しました。もう一度お試しください。");
+                    });
+                } else {
+                    alert("すべての項目を入力してください。");
+                }
+            });
+
+            document.getElementById('orderButton').addEventListener('click', function () {
+                let orderItems = [];
+                let totalPrice = 0;
+                const nickname = nicknameInput.value.trim();
+
+                if (!nickname) {
+                    alert("ニックネームを入力してください。");
+                    return;
+                }
+
+                for (let key in selectedItems) {
+                    if (selectedItems[key].count > 0) {
+                        const item = selectedItems[key];
+                        orderItems.push({ name: item.name, price: item.price, count: item.count });
+                        totalPrice += item.count * item.price;
+                    }
+                }
+
+                if (orderItems.length > 0) {
+                    const orderData = {
+                        nickname: nickname, // ニックネームを追加
+                        items: orderItems,
+                        total: totalPrice,
+                        date: new Date().toLocaleString()
+                    };
+
+                    const ordersRef = ref(database, 'orders');
+                    push(ordersRef, orderData)
+                        .then(() => {
+                            alert("注文が確定しました！PayPayに移動します。");
+                            window.location.href = `paypay://pay?amount=${totalPrice}`;
+                        })
+                        .catch((error) => {
+                            console.error("注文の保存中にエラーが発生しました: ", error);
+                            alert("注文の保存に失敗しました。もう一度お試しください。");
+                        });
+                } else {
+                    alert("メニューを選択してください。");
+                }
+            });
+
+            function addMenuToCategory(category, name, price, image, id, tax, isAdmin) {
+                const container = category === 'フード' ? foodContainer :
+                                  category === 'ドリンク' ? drinkContainer : otherContainer;
+                const menuItem = document.createElement('div');
+                menuItem.classList.add('menu-item');
+
+                const menuImageElement = document.createElement('img');
+                menuImageElement.src = image;
+                menuImageElement.alt = name;
+
+                const menuNameElement = document.createElement('p');
+                menuNameElement.textContent = name;
+
+                const menuPriceElement = document.createElement('p');
+                menuPriceElement.classList.add('price');
+                menuPriceElement.textContent = `\u00a5${price} (税込)`;
+
+                const quantityControls = document.createElement('div');
+                quantityControls.classList.add('quantity-controls');
+
+                const minusButton = document.createElement('button');
+                minusButton.textContent = '-';
+                minusButton.addEventListener('click', function () {
+                    if (!selectedItems[id]) {
+                        selectedItems[id] = { name, price, count: 0 };
+                    }
+                    selectedItems[id].count = Math.max(0, selectedItems[id].count - 1);
+                    updateSelectedItems();
+                });
+
+                const quantityDisplay = document.createElement('span');
+                quantityDisplay.textContent = selectedItems[id]?.count || '0';
+
+                const plusButton = document.createElement('button');
+                plusButton.textContent = '+';
+                plusButton.addEventListener('click', function () {
+                    if (!selectedItems[id]) {
+                        selectedItems[id] = { name, price, count: 0 };
+                    }
+                    selectedItems[id].count += 1;
+                    updateSelectedItems();
+                });
+
+                quantityControls.appendChild(minusButton);
+                quantityControls.appendChild(quantityDisplay);
+                quantityControls.appendChild(plusButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '削除';
+                deleteButton.type = 'button';
+                deleteButton.style.display = isAdmin ? 'inline' : 'none';
+                deleteButton.addEventListener('click', function () {
+                    const menuRef = ref(database, `menus/${id}`);
+                    set(menuRef, null).then(() => {
+                        container.removeChild(menuItem);
+                    }).catch((error) => {
+                        console.error("メニューの削除中にエラーが発生しました: ", error);
+                    });
+                });
+
+                menuItem.appendChild(menuImageElement);
+                menuItem.appendChild(menuNameElement);
+                menuItem.appendChild(menuPriceElement);
+                menuItem.appendChild(quantityControls);
+                menuItem.appendChild(deleteButton);
+
+                container.appendChild(menuItem);
+
+                function updateSelectedItems() {
+                    let totalQuantity = 0;
+                    let totalPrice = 0;
+                    selectedItemsContainer.innerHTML = '<h3>選択された商品</h3>';
+
+                    for (let key in selectedItems) {
+                        if (selectedItems[key].count > 0) {
+                            const item = selectedItems[key];
+                            totalQuantity += item.count;
+                            totalPrice += item.count * item.price;
+                            selectedItemsContainer.innerHTML += `<p>${item.name} x${item.count} (\u00a5${item.price * item.count})</p>`;
+                        }
+                    }
+
+                    // コピー用ボタンの追加
+            const copyButton = document.createElement('button');
+            copyButton.textContent = '合計金額をコピー';
+            copyButton.addEventListener('click', function () {
+                navigator.clipboard.writeText(`${totalPrice}`);
+                alert('合計金額をコピーしました！');
+            });
+
+                    
+                    selectedItemsContainer.innerHTML += `<hr><p>合計: ${totalQuantity}点 (\u00a5${totalPrice})</p>`;
+                    selectedItemsContainer.appendChild(copyButton);
+                    quantityDisplay.textContent = selectedItems[id]?.count || '0';
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+    <h2>メニュー選択</h2>
+
+    <div id="adminLogin">
+        <input type="password" id="adminPassword" placeholder="管理者パスワード">
+        <button id="loginButton">ログイン</button>
+    </div>
+
+    <div id="adminSection" style="display: none;">
+        <h3>管理者用メニュー管理</h3>
+        <input type="text" id="menuName" placeholder="商品名">
+        <input type="number" id="menuPrice" placeholder="値段">
+        <input type="text" id="menuImage" placeholder="画像URL">
+        <select id="menuCategory">
+            <option value="フード">フード</option>
+            <option value="ドリンク">ドリンク</option>
+            <option value="その他">その他</option>
+        </select>
+        <div>
+            <label><input type="radio" name="menuTax" value="8" checked> 8% 消費税</label>
+            <label><input type="radio" name="menuTax" value="10"> 10% 消費税</label>
+        </div>
+        <button id="addMenuButton">メニューを追加</button>
+    </div>
+
+    <div class="menu-category" id="foodCategory">
+        <h2>フード</h2>
+        <div id="foodContainer" class="menu-container"></div>
+    </div>
+
+    <div class="menu-category" id="drinkCategory">
+        <h2>ドリンク</h2>
+        <div id="drinkContainer" class="menu-container"></div>
+    </div>
+
+    <div class="menu-category" id="otherCategory">
+        <h2>その他</h2>
+        <div id="otherContainer" class="menu-container"></div>
+    </div>
+
+<input type="text" id="nickname" placeholder="ニックネームを入力してください">
+<div>※ニックネームは商品受け取り時に使用します</div>
+        
+    <div id="selectedItems">
+        <h3>選択された商品</h3>
+        <!-- 選択内容が動的に表示されます -->
+    </div>
+<div class="footer">
+    <div>※支払いは商品受け取り時に行ってください</div>
+<button id="orderButton">注文を確定</button>
+</div>
+
+
+</body>
+</html>
