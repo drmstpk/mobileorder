@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注文確認</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .nickname-list {
+            margin-top: 20px;
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .nickname-item {
+            padding: 8px;
+            background-color: #f0f0f0;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+    </style>
+    <script type="module">
+        document.addEventListener("DOMContentLoaded", () => {
+            // localStorageからニックネームを取得
+            let nicknames = JSON.parse(localStorage.getItem("nicknames")) || [];
+
+            // ニックネームが保存されていればリストを表示
+            const nicknameList = document.getElementById("nickname-list");
+
+            // 保存されたニックネームを表示
+            if (nicknames.length > 0) {
+                nicknames.forEach((nickname) => {
+                    const listItem = document.createElement("li");
+                    listItem.classList.add("nickname-item");
+                    listItem.textContent = nickname;
+                    nicknameList.appendChild(listItem);
+                });
+            } else {
+                const noDataMessage = document.createElement("p");
+                noDataMessage.textContent = "表示するニックネームはありません。";
+                nicknameList.appendChild(noDataMessage);
+            }
+
+            // 新しいニックネームを表示する処理
+            const storedNickname = localStorage.getItem("nickname");
+            if (storedNickname && !nicknames.includes(storedNickname)) {
+                // 新しいニックネームを追加
+                nicknames.push(storedNickname);
+                localStorage.setItem("nicknames", JSON.stringify(nicknames));
+
+                // 新しいニックネームをリストに追加
+                const listItem = document.createElement("li");
+                listItem.classList.add("nickname-item");
+                listItem.textContent = storedNickname;
+                nicknameList.appendChild(listItem);
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>注文確認</h1>
+    <div>
+        <h2>確認されたニックネーム</h2>
+        <ul id="nickname-list" class="nickname-list"></ul>
+    </div>
+</body>
+</html>
