@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>注文確認</title>
+    <title>注文内容表示</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,97 +15,69 @@
         }
 
         .nickname-container {
-            text-align: center;
-            margin-top: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .nickname-header {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
         }
 
         .nickname {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #4CAF50;
-            margin: 5px 0;
-        }
-
-        #clearButton {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
             font-size: 1.2em;
-            background-color: #FF5722;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        #clearButton:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
+            color: #333;
+            margin-bottom: 5px;
         }
     </style>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.8.3/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.8.3/firebase-database.js"></script>
-</head>
-<body>
-    <h1>注文確認</h1>
-    <div class="nickname-container" id="nickname-container">
-        <p>お客様のニックネーム:</p>
-        <div id="nickname-list"></div>
-    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    <button id="clearButton" disabled>表示を消す</button>
-
-    <script>
-        // Firebaseの設定
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyBi4R5J3DfW8xBXbM9cjSmQ_Ycwlzr76W4",
+            authDomain: "test2-802ce.firebaseapp.com",
+            databaseURL: "https://test2-802ce-default-rtdb.firebaseio.com",
+            projectId: "test2-802ce",
+            storageBucket: "test2-802ce.appspot.com",
+            messagingSenderId: "624514936023",
+            appId: "1:624514936023:web:cbbd8f7a89450b86e8d492",
+            measurementId: "G-5H39DWSK3Y"
         };
 
-        // Firebaseの初期化
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
-        // ニックネームリストを表示する
-        function displayNicknames(nicknames) {
-            const nicknameList = document.getElementById("nickname-list");
-            nicknameList.innerHTML = ''; // 既存のリストをクリア
+        document.addEventListener("DOMContentLoaded", () => {
+            const nicknameContainer = document.getElementById("nickname-container");
+            const ordersRef = ref(database, "orders");
 
-            // ニックネームを表示
-            nicknames.forEach(nickname => {
-                const nicknameElement = document.createElement("p");
-                nicknameElement.textContent = nickname;
-                nicknameElement.classList.add("nickname");
-                nicknameList.appendChild(nicknameElement);
+            onValue(ordersRef, (snapshot) => {
+                const orders = snapshot.val();
+                nicknameContainer.innerHTML = "";
+
+                if (orders) {
+                    Object.entries(orders).forEach(([id, order]) => {
+                        const nicknameDiv = document.createElement("div");
+                        nicknameDiv.classList.add("nickname");
+
+                        nicknameDiv.textContent = `ニックネーム: ${order.nickname}`;
+                        nicknameContainer.appendChild(nicknameDiv);
+                    });
+                }
             });
-
-            // ボタンの有効化
-            document.getElementById("clearButton").disabled = false;
-        }
-
-        // Firebaseからニックネームを取得
-        database.ref("nicknames").on("value", (snapshot) => {
-            const data = snapshot.val();
-            const nicknames = data ? Object.values(data) : [];
-            displayNicknames(nicknames);
-        });
-
-        // ボタンが押された時にニックネームを消去する
-        document.getElementById("clearButton").addEventListener("click", () => {
-            database.ref("nicknames").remove()
-                .then(() => {
-                    document.getElementById("nickname-list").innerHTML = "<p>ニックネームは削除されました。</p>";
-                    document.getElementById("clearButton").disabled = true;
-                })
-                .catch((error) => {
-                    console.error("エラーが発生しました: ", error);
-                });
         });
     </script>
+</head>
+<body>
+    <h1>注文内容</h1>
+    <div id="nickname-container" class="nickname-container"></div>
 </body>
 </html>
