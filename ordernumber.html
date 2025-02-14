@@ -1,11 +1,47 @@
 <!DOCTYPE html>
-<html lang="jp">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>注文確認</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .nickname-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .nickname {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+    </style>
 </head>
 <body>
-    
+    <h1>注文確認</h1>
+    <div class="nickname-container">
+        <p>お客様のニックネーム: <span id="nickname" class="nickname">読み込み中...</span></p>
+    </div>
+
+    <script>
+        // localStorage からニックネームを取得
+        const nickname = localStorage.getItem("nickname");
+
+        // ニックネームが存在する場合に表示
+        if (nickname) {
+            document.getElementById("nickname").textContent = nickname;
+        } else {
+            document.getElementById("nickname").textContent = "不明";
+        }
+    </script>
 </body>
 </html>
