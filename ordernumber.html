@@ -19,29 +19,68 @@
             margin-top: 20px;
         }
 
-        .nickname {
+        .nickname-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .nickname-item {
             font-size: 1.5em;
             font-weight: bold;
             color: #4CAF50;
+            margin: 5px 0;
         }
     </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
 <body>
     <h1>注文確認</h1>
     <div class="nickname-container">
-        <p>お客様のニックネーム: <span id="nickname" class="nickname">読み込み中...</span></p>
+        <p>お客様のニックネーム:</p>
+        <ul id="nickname-list" class="nickname-list">
+            <!-- ここにニックネームを表示 -->
+        </ul>
     </div>
 
     <script>
-        // localStorage からニックネームを取得
-        const nickname = localStorage.getItem("nickname");
+        // Firebaseの設定
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
 
-        // ニックネームが存在する場合に表示
-        if (nickname) {
-            document.getElementById("nickname").textContent = nickname;
-        } else {
-            document.getElementById("nickname").textContent = "不明";
+        // Firebaseを初期化
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+
+        // firestoreからニックネームを取得
+        function fetchNicknames() {
+            db.collection("nicknames").get()
+                .then((querySnapshot) => {
+                    const nicknameList = document.getElementById("nickname-list");
+                    nicknameList.innerHTML = ""; // 既存のリストをクリア
+
+                    querySnapshot.forEach((doc) => {
+                        const nickname = doc.data().nickname;
+                        const li = document.createElement("li");
+                        li.classList.add("nickname-item");
+                        li.textContent = nickname;
+                        nicknameList.appendChild(li);
+                    });
+                })
+                .catch((error) => {
+                    console.error("エラーが発生しました: ", error);
+                });
         }
+
+        // ページが読み込まれた際にニックネームを取得
+        window.onload = fetchNicknames;
     </script>
 </body>
 </html>
