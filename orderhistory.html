@@ -289,11 +289,11 @@
                                 // 追加：ニックネームを表示するボタン
                                 const viewOrderButton = document.createElement("button");
                                 viewOrderButton.classList.add("view-order-button");
-                                viewOrderButton.textContent = "この注文を確認";
-                                viewOrderButton.onclick = () => {
-                                    localStorage.setItem("nickname", order.nickname);
-                                    window.location.href = "ordernumber.html";
-                                };
+                                viewOrderButton.textContent = "確認";
+                                viewOrderButton.addEventListener("click", () => {
+                                    localStorage.setItem("nickname", order.nickname); // ニックネームをローカルストレージに保存
+                                    window.location.href = "ordernumber.html"; // 次のページへ遷移
+                                });
                                 orderDiv.appendChild(viewOrderButton);
 
                                 dayDiv.appendChild(orderDiv);
