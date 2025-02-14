@@ -19,68 +19,93 @@
             margin-top: 20px;
         }
 
-        .nickname-list {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .nickname-item {
+        .nickname {
             font-size: 1.5em;
             font-weight: bold;
             color: #4CAF50;
             margin: 5px 0;
         }
+
+        #clearButton {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #FF5722;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #clearButton:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
     </style>
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.8.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.8.3/firebase-database.js"></script>
 </head>
 <body>
     <h1>注文確認</h1>
-    <div class="nickname-container">
+    <div class="nickname-container" id="nickname-container">
         <p>お客様のニックネーム:</p>
-        <ul id="nickname-list" class="nickname-list">
-            <!-- ここにニックネームを表示 -->
-        </ul>
+        <div id="nickname-list"></div>
     </div>
+
+    <button id="clearButton" disabled>表示を消す</button>
 
     <script>
         // Firebaseの設定
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
             projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
             messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
             appId: "YOUR_APP_ID"
         };
 
-        // Firebaseを初期化
+        // Firebaseの初期化
         const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(app);
+        const database = firebase.database();
 
-        // firestoreからニックネームを取得
-        function fetchNicknames() {
-            db.collection("nicknames").get()
-                .then((querySnapshot) => {
-                    const nicknameList = document.getElementById("nickname-list");
-                    nicknameList.innerHTML = ""; // 既存のリストをクリア
+        // ニックネームリストを表示する
+        function displayNicknames(nicknames) {
+            const nicknameList = document.getElementById("nickname-list");
+            nicknameList.innerHTML = ''; // 既存のリストをクリア
 
-                    querySnapshot.forEach((doc) => {
-                        const nickname = doc.data().nickname;
-                        const li = document.createElement("li");
-                        li.classList.add("nickname-item");
-                        li.textContent = nickname;
-                        nicknameList.appendChild(li);
-                    });
+            // ニックネームを表示
+            nicknames.forEach(nickname => {
+                const nicknameElement = document.createElement("p");
+                nicknameElement.textContent = nickname;
+                nicknameElement.classList.add("nickname");
+                nicknameList.appendChild(nicknameElement);
+            });
+
+            // ボタンの有効化
+            document.getElementById("clearButton").disabled = false;
+        }
+
+        // Firebaseからニックネームを取得
+        database.ref("nicknames").on("value", (snapshot) => {
+            const data = snapshot.val();
+            const nicknames = data ? Object.values(data) : [];
+            displayNicknames(nicknames);
+        });
+
+        // ボタンが押された時にニックネームを消去する
+        document.getElementById("clearButton").addEventListener("click", () => {
+            database.ref("nicknames").remove()
+                .then(() => {
+                    document.getElementById("nickname-list").innerHTML = "<p>ニックネームは削除されました。</p>";
+                    document.getElementById("clearButton").disabled = true;
                 })
                 .catch((error) => {
                     console.error("エラーが発生しました: ", error);
                 });
-        }
-
-        // ページが読み込まれた際にニックネームを取得
-        window.onload = fetchNicknames;
+        });
     </script>
 </body>
 </html>
